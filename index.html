@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tharaka-Nithi Digital Connect</title>
+
+<!-- PWA: lets phones install this as a home-screen app -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F3D2E">
+<meta name="description" content="Everything Tharaka-Nithi. One Digital Platform. ">
+
+<!-- Home screen icons -->
+<link rel="icon" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+
+<!-- iOS-specific: makes it open full-screen when added to Home Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TNC Digital Connect">
+
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="not-authed">
+
+<!-- ============================================================
+     LOGIN / SIGN UP GATE — shown before the app can be used.
+     Accounts are stored locally in this browser.
+     ============================================================ -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <img class="brand-mark" src="images/tnc-county-emblem.png" alt="Tharaka-Nithi County emblem">
+      <div>
+        <strong>Tharaka-Nithi</strong>
+        <div class="muted">Digital Connect</div>
+      </div>
+    </div>
+
+    <div class="language-picker auth-language">
+      <label for="tnLanguage" class="sr-only">Language</label>
+      <select id="tnLanguage" aria-label="Language">
+        <option value="en">English</option>
+        <option value="sw">Kiswahili</option>
+        <option value="ki">Kîîtharaka</option>
+      </select>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth-tab="login">Log In</button>
+      <button class="auth-tab" data-auth-tab="signup">Sign Up</button>
+    </div>
+
+    <!-- LOG IN FORM -->
+    <form id="loginForm" class="auth-form">
+      <label data-i18n="fullName">Full Name
+        <input type="text" id="loginName" placeholder="Enter your name" autocomplete="name" required>
+      </label>
+      <label data-i18n="password">Password
+        <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password" required>
+      </label>
+      <button type="button" class="auth-link" id="forgotPasswordBtn" data-i18n="forgotPassword">Forgot your password?</button>
+      <p class="auth-error" id="loginError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="login">Log In</button>
+    </form>
+
+    <!-- SIGN UP FORM -->
+    <form id="signupForm" class="auth-form" hidden>
+      <label>Full Name
+        <input type="text" id="signupName" placeholder="Your full name" autocomplete="name" required>
+      </label>
+      <label>Password
+        <input type="password" id="signupPassword" placeholder="Create a password" autocomplete="new-password" required>
+      </label>
+      <label>Confirm Password
+        <input type="password" id="signupConfirm" placeholder="Re-enter password" autocomplete="new-password" required>
+      </label>
+      <p class="auth-error" id="signupError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- PASSWORD RECOVERY / CHANGE PASSWORD -->
+<div class="modal-overlay" id="passwordRecoveryOverlay" hidden>
+  <div class="modal auth-recovery-modal" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle">
+    <button class="modal-close" id="passwordRecoveryClose" aria-label="Close">✕</button>
+    <div class="recovery-icon">🔐</div>
+    <h2 id="passwordRecoveryTitle">Reset your password</h2>
+    <p class="muted" id="passwordRecoveryIntro">Reset your password using the account saved on this device.</p>
+    <form id="passwordRecoveryForm" class="auth-form">
+      <label id="recoveryIdentityLabel">Phone number or email
+        <input id="recoveryIdentity" autocomplete="username" required>
+      </label>
+      <div id="recoveryOtpStep" hidden>
+        <label id="recoveryOtpLabel">Verification code
+          <input id="recoveryOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+        </label>
+      </div>
+      <div id="recoveryPasswordStep" hidden>
+        <label id="newPasswordLabel">New password
+          <input id="recoveryNewPassword" type="password" autocomplete="new-password">
+        </label>
+        <label id="confirmPasswordLabel">Confirm new password
+          <input id="recoveryConfirmPassword" type="password" autocomplete="new-password">
+        </label>
+      </div>
+      <p class="auth-error" id="recoveryError" hidden></p>
+      <button type="submit" class="btn btn-primary btn-block" id="recoverySubmit">Send verification code</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP NOTICE
+     ============================================================ -->
+<div class="proto-banner">
+  Tharaka-Nithi Digital Connect
+</div>
+
+<!-- ============================================================
+     TOP BAR (mobile) / TOP NAV (desktop)
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="brand" data-nav="home">
+      <img class="brand-mark" src="images/tnc-county-emblem.png" alt="Tharaka-Nithi County emblem">
+      <div class="brand-text">
+        <strong>Tharaka-Nithi</strong>
+        <span>Digital Connect</span>
+      </div>
+    </div>
+
+    <nav class="top-nav">
+      <a href="#" data-nav="home" class="active">Home</a>
+      <a href="#" data-nav="jobs">Opportunities</a>
+      <a href="#" data-nav="skills">Skills &amp; Services</a>
+      <a href="#" data-nav="business">Marketplace</a>
+      <a href="#" data-nav="agriculture">Agriculture</a>
+      <a href="#" data-nav="property">Property</a>
+      <a href="#" data-nav="transport">Transport</a>
+      <a href="#" data-nav="health">Healthcare</a>
+      <a href="#" data-nav="events">Events</a>
+      <a href="#" data-nav="county">County</a>
+      <a href="#" data-nav="leaders">Leaders</a>
+      <a href="#" data-nav="emergency">Emergency</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="icon-btn" data-nav="notifications" aria-label="Notifications">
+        🔔<span class="badge" id="notifBadge">3</span>
+      </button>
+      <button class="icon-btn profile-btn" data-nav="profile" aria-label="Profile">👤</button>
+    </div>
+  </div>
+</header>
+
+<!-- Slide-out sidebar for mobile menu -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <img class="brand-mark" src="images/tnc-county-emblem.png" alt="Tharaka-Nithi County emblem">
+    <div>
+      <strong>Tharaka-Nithi</strong>
+      <div class="muted">Digital Connect</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" data-nav="home">🏠 Home</a>
+    <a href="#" data-nav="jobs">💼 Jobs &amp; Opportunities</a>
+    <a href="#" data-nav="skills">🛠️ Skills &amp; Services</a>
+    <a href="#" data-nav="business">🏪 Businesses &amp; Marketplace</a>
+    <a href="#" data-nav="agriculture">🌾 Agriculture &amp; Markets</a>
+    <a href="#" data-nav="property">🏘️ Property</a>
+    <a href="#" data-nav="transport">🚌 Transport</a>
+    <a href="#" data-nav="health">🏥 Healthcare</a>
+    <a href="#" data-nav="events">🎉 Events &amp; Community</a>
+    <a href="#" data-nav="county">🏛️ County Services</a>
+    <a href="#" data-nav="leaders">🤝 Connect With Leaders</a>
+    <a href="#" data-nav="emergency">🚨 Emergency Contacts</a>
+    <hr>
+    <a href="#" data-nav="profile">👤 My Profile</a>
+    <a href="#" data-nav="notifications">🔔 Notifications</a>
+  </nav>
+</aside>
+
+<!-- ============================================================
+     MAIN APP AREA — one <section class="screen"> per app section.
+     JS toggles which one has the "screen-active" class.
+     ============================================================ -->
+<main id="app">
+
+  <!-- ---------------- HOME ---------------- -->
+  <section class="screen screen-active" id="screen-home">
+    <!-- EMERGENCY ALERT BANNER -->
+    <div class="emergency-alert" id="emergencyAlert" role="alert" aria-live="polite">
+      <div class="emergency-alert-icon" aria-hidden="true">🚨</div>
+      <div class="emergency-alert-content">
+        <div class="emergency-alert-label">EMERGENCY ALERT</div>
+        <div class="emergency-alert-title" id="emergencyAlertTitle">Stay alert: heavy rainfall may affect roads and low-lying areas.</div>
+        <div class="emergency-alert-meta" id="emergencyAlertMeta">Tharaka-Nithi County · Updated recently</div>
+      </div>
+      <button class="emergency-alert-action" id="emergencyAlertAction" type="button">View Details</button>
+      <button class="emergency-alert-close" id="emergencyAlertClose" type="button" aria-label="Dismiss emergency alert">×</button>
+    </div>
+
+    <div class="home-weather-layout">
+      <aside class="weather-panel" id="weatherPanel" aria-label="Weather updates">
+        <div class="weather-panel-head">
+          <div>
+            <span class="weather-kicker">LOCAL WEATHER</span>
+            <h2>Weather Updates</h2>
+          </div>
+          <span class="weather-live-dot" title="Live weather"></span>
+        </div>
+
+        <div class="weather-location-row">
+          <span>📍</span>
+          <select id="weatherLocation" aria-label="Weather location">
+            <option value="Chuka">Chuka</option>
+            <option value="Kathwana">Kathwana</option>
+            <option value="Marimanti">Marimanti</option>
+            <option value="Chogoria">Chogoria</option>
+            <option value="Maara">Maara</option>
+            <option value="Tharaka North">Tharaka North</option>
+            <option value="Tharaka South">Tharaka South</option>
+            <option value="__gps">Use my location</option>
+          </select>
+        </div>
+
+        <div class="weather-current" id="weatherCurrent">
+          <div class="weather-loading">
+            <span class="weather-spinner"></span>
+            <span>Loading weather…</span>
+          </div>
+        </div>
+
+        <div class="weather-forecast" id="weatherForecast"></div>
+        <div class="weather-updated" id="weatherUpdated">Fetching live forecast…</div>
+      </aside>
+
+      <div class="home-main">
+        <div class="hero">
+          <div class="hero-text">
+            <h1>Everything Tharaka-Nithi.<br>One Digital Platform.</h1>
+            <p>Find jobs, skilled artisans, businesses, farm markets, property, transport, healthcare and your county leaders — all in one place.</p>
+          </div>
+          <div class="search-card">
+            <div class="search-row">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="mainSearch" placeholder="What are you looking for in Tharaka-Nithi?">
+              <button id="mainSearchBtn" class="btn btn-primary">Search</button>
+            </div>
+            <div class="location-row">
+              <span>📍</span>
+              <select id="locationSelect">
+                <option>All Sub-Counties</option>
+                <option>Chuka</option>
+                <option>Igambang'ombe</option>
+                <option>Maara</option>
+                <option>Meru South</option>
+                <option>Tharaka North</option>
+                <option>Tharaka South</option>
+              </select>
+            </div>
+            <div class="search-hints">Try: "electrician", "job", "hospital", "house"</div>
+          </div>
+        </div>
+
+        <h2 class="section-title">Main Categories</h2>
+        <div class="grid grid-cats" id="homeCategories"></div>
+
+        <h2 class="section-title">Nearby Services</h2>
+        <div class="grid grid-cards" id="nearbyServices"></div>
+
+        <h2 class="section-title">Latest Opportunities</h2>
+        <div class="grid grid-cards" id="latestOpportunities"></div>
+
+        <h2 class="section-title">Important Announcements</h2>
+        <div class="announcement-list" id="homeAnnouncements"></div><div class="tnc-live-public-wrap" id="tncLivePublicWrap"><div class="section-heading" style="margin-top:16px"><div><span class="eyebrow">LIVE COUNTY INFORMATION</span><h2>Latest published updates</h2></div></div><div id="tncLivePublicUpdates" class="tnc-live-grid"></div></div>
+
+        <section class="today-dashboard" id="todayDashboard">
+          <div class="section-head-row">
+            <div><h2 class="section-title compact-title">Today in Tharaka-Nithi</h2><p class="muted">Quick information for your selected area.</p></div>
+            <select id="myAreaSelect" class="area-select" aria-label="My area">
+              <option>Chuka</option><option>Maara</option><option>Kathwana</option><option>Marimanti</option><option>Chogoria</option><option>Tharaka North</option><option>Tharaka South</option>
+            </select>
+          </div>
+          <div class="dashboard-grid">
+            <button class="info-tile weather-tile" data-dashboard="weather"><span class="tile-icon">🌦️</span><span><strong>Weather & Farming</strong><small>Rain forecast, farming alerts & sunrise</small></span><b>›</b></button>
+            <button class="info-tile alert-tile" data-dashboard="alerts"><span class="tile-icon">🚨</span><span><strong>Emergency Alerts</strong><small>Flood, road, security & utility alerts</small></span><b>2</b></button>
+            <button class="info-tile" data-dashboard="map"><span class="tile-icon">🗺️</span><span><strong>Explore Nearby</strong><small>Hospitals, police, markets & services</small></span><b>›</b></button>
+            <button class="info-tile" data-dashboard="health"><span class="tile-icon">🏥</span><span><strong>Healthcare</strong><small>Hospitals, services, hours & directions</small></span><b>›</b></button>
+            <button class="info-tile agri-tile" data-dashboard="agriculture"><span class="tile-icon">🌾</span><span><strong>Agriculture</strong><small>Prices, markets, inputs & crop alerts</small></span><b>›</b></button>
+            <button class="info-tile" data-dashboard="jobs"><span class="tile-icon">💼</span><span><strong>Jobs & Opportunities</strong><small>Jobs, youth, tenders & scholarships</small></span><b>12</b></button>
+            <button class="info-tile" data-dashboard="transport"><span class="tile-icon">🚌</span><span><strong>Transport</strong><small>Roads, closures, routes & fares</small></span><b>›</b></button>
+            <button class="info-tile" data-dashboard="services"><span class="tile-icon">🏛️</span><span><strong>County Services</strong><small>Requirements, costs, offices & procedures</small></span><b>›</b></button>
+          </div>
+        </section>
+
+        <section class="county-map-preview">
+          <div class="section-head-row"><div><h2 class="section-title compact-title">🗺️ Explore Tharaka-Nithi</h2><p class="muted">Find essential places and services around you.</p></div><button class="btn btn-outline btn-sm" data-dashboard="map">Open Map</button></div>
+          <div class="map-filter-row">
+            <button class="map-filter active">🏥 Hospitals</button><button class="map-filter">👮 Police</button><button class="map-filter">🛒 Markets</button><button class="map-filter">🏫 Schools</button><button class="map-filter">⛽ Fuel</button><button class="map-filter">💧 Water</button>
+          </div>
+          <div class="map-placeholder"><div class="map-pin pin-a">🏥</div><div class="map-pin pin-b">🛒</div><div class="map-pin pin-c">👮</div><div class="map-center">📍<strong>Chuka</strong><small>Nearby places will appear here</small></div></div>
+        </section>
+
+        <section class="quick-services">
+          <div class="section-head-row"><div><h2 class="section-title compact-title">🏛️ County Services</h2><p class="muted">What service do you need?</p></div><button class="btn btn-outline btn-sm" data-dashboard="services">View all</button></div>
+          <div class="service-shortcuts"><button data-dashboard="services">📄 Permits & Licences</button><button data-dashboard="services">💧 Water Services</button><button data-dashboard="services">🏗️ Construction</button><button data-dashboard="services">🌾 Agriculture</button><button data-dashboard="services">💼 County Jobs</button><button data-dashboard="services">🏥 Health Services</button></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- JOBS & OPPORTUNITIES ---------------- -->
+  <section class="screen" id="screen-jobs">
+    <h1 class="page-title">Jobs &amp; Opportunities</h1>
+    <div class="chip-row" id="jobsFilterChips"></div>
+    <div class="grid grid-cards" id="jobsList"></div><div class="tnc-managed-public" id="tncManagedJobs"></div>
+  </section>
+
+  <!-- ---------------- SKILLS & SERVICES ---------------- -->
+  <section class="screen" id="screen-skills">
+    <h1 class="page-title">Skills &amp; Services</h1>
+    <div class="chip-row" id="skillsFilterChips"></div>
+    <div class="grid grid-cards" id="skillsList"></div>
+  </section>
+
+  <!-- ---------------- BUSINESSES & MARKETPLACE ---------------- -->
+  <section class="screen" id="screen-business">
+    <h1 class="page-title">Businesses &amp; Marketplace</h1>
+    <div class="chip-row" id="businessFilterChips"></div>
+    <div class="grid grid-cards" id="businessList"></div>
+  </section>
+
+  <!-- ---------------- AGRICULTURE & MARKETS ---------------- -->
+  <section class="screen" id="screen-agriculture">
+    <h1 class="page-title">Agriculture &amp; Markets</h1>
+    <div class="chip-row" id="agriFilterChips"></div>
+    <div class="grid grid-cards" id="agriList"></div><div class="tnc-managed-public" id="tncManagedAgriculture"></div>
+  </section>
+
+  <!-- ---------------- PROPERTY ---------------- -->
+  <section class="screen" id="screen-property">
+    <h1 class="page-title">Property</h1>
+    <div class="chip-row" id="propertyFilterChips"></div>
+    <div class="grid grid-cards" id="propertyList"></div>
+  </section>
+
+  <!-- ---------------- TRANSPORT ---------------- -->
+  <section class="screen" id="screen-transport">
+    <h1 class="page-title">Transport</h1>
+    <div class="chip-row" id="transportFilterChips"></div>
+    <div class="grid grid-cards" id="transportList"></div><div class="tnc-managed-public" id="tncManagedTransport"></div>
+  </section>
+
+  <!-- ---------------- HEALTHCARE ---------------- -->
+  <section class="screen" id="screen-health">
+    <h1 class="page-title">Healthcare</h1>
+    <div class="grid grid-cards" id="healthList"></div><div class="tnc-managed-public" id="tncManagedHealth"></div>
+
+    <div class="queue-panel">
+      <h2 class="section-title">Digital Hospital Queue</h2>
+      <p class="muted">Create and manage a queue ticket on this device.</p>
+
+      <div class="queue-form">
+        <label>Select Hospital
+          <select id="queueHospital"></select>
+        </label>
+        <label>Select Service
+          <select id="queueService">
+            <option>Outpatient</option>
+            <option>Maternity</option>
+            <option>Pharmacy</option>
+            <option>Laboratory</option>
+            <option>Dental</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" id="getTicketBtn">Get Digital Ticket</button>
+      </div>
+
+      <div class="ticket-card" id="ticketCard" hidden>
+        <div class="ticket-top">
+          <span>Tharaka-Nithi Digital Connect</span>
+          <span class="card-tag">Queue Ticket</span>
+        </div>
+        <div class="ticket-number" id="ticketNumber">A047</div>
+        <div class="ticket-meta">
+          <div><strong id="ticketHospital">—</strong><br><span id="ticketService" class="muted">—</span></div>
+          <div class="ticket-ahead">
+            <span id="ticketAhead">12</span> people ahead
+          </div>
+        </div>
+        <div class="ticket-wait">Estimated wait: <strong id="ticketWait">—</strong></div>
+        <div class="ticket-note">We'll notify you when your turn is approaching.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- EVENTS & COMMUNITY ---------------- -->
+  <section class="screen" id="screen-events">
+    <h1 class="page-title">Events &amp; Community</h1>
+    <div class="chip-row" id="eventsFilterChips"></div>
+    <div class="grid grid-cards" id="eventsList"></div>
+  </section>
+
+  <!-- ---------------- COUNTY SERVICES ---------------- -->
+  <section class="screen" id="screen-county">
+    <h1 class="page-title">County Services</h1>
+    <div class="grid grid-cards" id="countyList"></div><div class="tnc-managed-public" id="tncManagedServices"></div>
+  </section>
+
+  <!-- ---------------- CONNECT WITH LEADERS ---------------- -->
+  <section class="screen" id="screen-leaders">
+    <h1 class="page-title">Connect With Your Leaders</h1>
+    <p class="muted">Service providers added to this device are shown here.</p>
+    <div class="grid grid-cards" id="leadersList"></div>
+
+    <div class="concern-panel">
+      <h2 class="section-title">Submit a Community Concern</h2>
+      <form id="concernForm">
+        <label>Category
+          <select id="concernCategory">
+            <option>Roads &amp; Infrastructure</option>
+            <option>Water &amp; Sanitation</option>
+            <option>Health</option>
+            <option>Education</option>
+            <option>Security</option>
+            <option>Agriculture</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Location
+          <input type="text" id="concernLocation" placeholder="e.g. Chuka Town" required>
+        </label>
+        <label>Description
+          <textarea id="concernDescription" rows="4" placeholder="Describe the issue..." required></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary">Submit Concern</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ---------------- EMERGENCY & IMPORTANT CONTACTS ---------------- -->
+  <section class="screen" id="screen-emergency">
+    <h1 class="page-title">Emergency &amp; Important Contacts</h1>
+    <div class="grid grid-cards" id="emergencyList"></div><div class="tnc-managed-public" id="tncManagedEmergency"></div>
+  </section>
+
+  <!-- ---------------- SEARCH RESULTS ---------------- -->
+  <section class="screen" id="screen-search">
+    <h1 class="page-title">Search Results</h1>
+    <p class="muted" id="searchSummary"></p>
+    <div class="grid grid-cards" id="searchResults"></div>
+  </section>
+
+  <!-- ---------------- USER PROFILE ---------------- -->
+  <section class="screen" id="screen-profile">
+    <h1 class="page-title">My Profile</h1>
+    <div class="profile-card">
+      <div class="profile-avatar">👤</div>
+      <div>
+        <h3 id="profileName">Account</h3>
+        <p class="muted">📍 Chuka, Tharaka-Nithi</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" id="changePasswordBtn">🔐 Change Password</button>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Log Out</button>
+      </div>
+    </div>
+    <div class="profile-tabs">
+      <button class="tab-btn active" data-tab="saved">Saved Services</button>
+      <button class="tab-btn" data-tab="applications">My Applications</button>
+      <button class="tab-btn" data-tab="bookings">My Bookings</button>
+    </div>
+    <div class="grid grid-cards" id="profileTabContent"></div>
+  </section>
+
+  <!-- ---------------- NOTIFICATIONS ---------------- -->
+  <section class="screen" id="screen-notifications">
+    <h1 class="page-title">Notifications</h1>
+    <div class="notification-list" id="notificationList"></div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     BOTTOM NAV — mobile only
+     ============================================================ -->
+<nav class="bottom-nav">
+  <a href="#" data-nav="home" class="active"><span>🏠</span>Home</a>
+  <a href="#" data-nav="search-focus"><span>🔎</span>Search</a>
+  <a href="#" data-nav="skills"><span>🛠️</span>Services</a>
+  <a href="#" data-nav="notifications"><span>🔔</span>Alerts</a>
+  <a href="#" data-nav="profile"><span>👤</span>Profile</a>
+</nav>
+
+<!-- ============================================================
+     MODAL — used for provider / listing detail views
+     ============================================================ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Small toast for confirmations -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+<script src="tnc-sync.js"></script>
+<script src="knowledge.js"></script>
+<script>
+  // Register the service worker so the app can be installed on a phone.
+  // If this fails (e.g. opened as a local file instead of hosted online),
+  // the app still works normally — installing as a PWA just won't be available.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {
+        // Optional browser features may be unavailable.
+      });
+    });
+  }
+</script>
+</body>
+</html>
